@@ -6,13 +6,13 @@ packer {
     }
     vmware = {
       version = ">= 1.0.7"
-      source  = "github.com/hashicorp/vmware"
+      source  = "github.com/hashicorp/vsphere"
     }
   }
 }
 
 
-source "vmware-iso" "rocky_linux" {
+source "vsphere-iso" "rocky_linux" {
   iso_url            = "https://dl.rockylinux.org/vault/rocky/9.4/isos/x86_64/Rocky-9.4-x86_64-dvd.iso"   // Replace with actual ISO URL
   iso_checksum       = "sha256:e20445907daefbfcdb05ba034e9fc4cf91e0e8dc164ebd7266ffb8fdd8ea99e7" // Replace with actual checksum
   ssh_username       = "packer"
@@ -27,7 +27,7 @@ source "vmware-iso" "rocky_linux" {
 }
 
 build {
-  sources = ["source.vmware-iso.rocky_linux"]
+  sources = ["source.vsphere-iso.rocky_linux"]
 
   provisioner "shell" {
     inline = [
