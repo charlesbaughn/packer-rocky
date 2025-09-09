@@ -1,0 +1,18 @@
+#!/bin/bash
+# /usr/local/sbin/puppetfirstrun
+# Original: Erik Johnson 2015
+# Updated: John Hurst 2018
+# This script checks whether puppet has already
+# run, and if not, runs against the new puppet master
+# and then deletes the associated files related to the first run.
+if [[  $(rpm -qa | grep -q puppet-agent) ]]; then
+    /bin/curl -k https://puppetprd1.cgb.me:8140/packages/current/install.bash | bash
+    sleep 20
+    # Run puppet against the master
+    /usr/local/bin/puppet agent --test --server=puppetprd1.cgb.me
+    # Touch and create our canary file
+    # /bin/touch /var/tmp/puppetfirstbootrun
+else
+    # Move this script to var/tmp if puppet agent is already installed.
+    echo "Puppet already installed"
+fi

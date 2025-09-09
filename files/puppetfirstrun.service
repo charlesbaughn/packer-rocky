@@ -1,0 +1,13 @@
+##/usr/lib/systemd/system/puppetfirstrun.service
+[Unit]
+Description=Puppet First Run
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/puppetfirstrun
+RemainAfterExit=true
+StandardOutput=journal
+
+[Install]
+WantedBy=multi-user.target
