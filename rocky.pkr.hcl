@@ -11,17 +11,32 @@ packer {
   }
 }
 
+# --- Variables ---
+variable "vm_name" {
+  default = "rocky-linux-ami"
+}
+variable "s3_bucket" {
+  default = "esm-serverimages"
+}
+variable "s3_key" {
+  default = "packer-images/disk.vmdk"
+}
+variable "aws_region" {
+  default = "us-east-2"
+}
+
 source "vsphere-iso" "rocky_linux" {
   # Connection to ESXi
-  vcenter_server      = "10.69.1.7"           # Replace with your ESXi IP/hostname
-  username            = "root"                   # ESXi username
-  password            = "DUMMYDATA"     # Replace with your ESXi password
+  vcenter_server      = "vcsa.cgb.me"           # Replace with your ESXi IP/hostname
+  username            = "Administrator@vsphere.cgb.me"                   # ESXi username
+  password            = "XXXXXX"     # Replace with your ESXi password
   insecure_connection = true                     # For self-signed certificates
 
   # VM Placement
-  datacenter = "ha-datacenter"                   # Default datacenter name for standalone ESXi
+  datacenter = "homelab"                   # Default datacenter name for standalone ESXi
   datastore  = "SSD_02"             # Replace with your datastore name
-  host       = "10.69.1.7"                    # Same as vcenter_server for standalone ESXi
+  host       = "10.69.1.7"
+  folder     = "VMCGB01_PRD/VMCGB01_PRD_ESS_TEMPLATES"                    # Same as vcenter_server for standalone ESXi
 
   # Network Configuration
   network_adapters {
@@ -41,7 +56,7 @@ source "vsphere-iso" "rocky_linux" {
       ]
   communicator   = "ssh"
   ssh_username   = "root"
-  ssh_password   = "SinaDUMMYDATA"
+  ssh_password   = "XXXXX"
   ssh_timeout    = "30m"
 
   http_directory = "http"
@@ -61,14 +76,20 @@ source "vsphere-iso" "rocky_linux" {
   RAM = 2048
 
   storage {
-    disk_size             = 80480
+    disk_size             = 81920
     disk_thin_provisioned = true
   }
 
 
 
   # Shutdown
-  shutdown_command = "echo 'packer' | sudo -S shutdown -P now"
+  shutdown_command = "sudo -S shutdown -P now"
+
+  export {
+    force           = true
+    output_directory = "./output"
+  }
+
 }
 
 build {
@@ -76,7 +97,7 @@ build {
 
   provisioner "shell" {
     inline = [
-      "sudo dnf update -y --nobest",
+      #"sudo dnf update -y --nobest",
       "sudo dnf install -y vim"
     ]
   }
@@ -102,17 +123,19 @@ build {
     provisioner "shell" {
     inline = [
         "echo 'Checking if service file exists in /tmp...'",
-        "ls -la /tmp/puppetfirstrun.service",
+        "ls -lstrhaZ /tmp/puppetfirstrun.service",
         "echo 'Moving service file to systemd directory...'",
         "sudo mv /tmp/puppetfirstrun.service /usr/lib/systemd/system/puppetfirstrun.service",
         "echo 'Verifying service file was moved...'",
-        "ls -la /usr/lib/systemd/system/puppetfirstrun.service",
+        "ls -lstrhaZ /usr/lib/systemd/system/puppetfirstrun.service",
         "echo 'Reloading systemd daemon...'",
         "sudo systemctl daemon-reload",
+        "echo 'Checking file context for file...'",
+        "sudo restorecon /usr/lib/systemd/system/puppetfirstrun.service",
+        "ls -lstrhaZ /usr/lib/systemd/system/puppetfirstrun.service",
         "echo 'Enabling puppetfirstrun service...'",
-        "sudo systemctl enable puppetfirstrun.service",
-        "echo 'Checking service status...'",
-        "sudo systemctl status puppetfirstrun.service --no-pager"
+        "sudo systemctl enable puppetfirstrun.service"
     ]
-    }
+  }
+
 }
